@@ -236,8 +236,7 @@ describe('test/unit/lib/classes/console.test.js', () => {
           command: 'package',
           configExt: {
             console: {
-              disableLogsCollection: true,
-              disableRequestResponseCollection: true,
+              monitoring: { logs: { disabled: true } },
             },
             org: 'testorg',
           },
@@ -252,12 +251,8 @@ describe('test/unit/lib/classes/console.test.js', () => {
         );
       });
 
-      it('should propagate `disableLogsCollection`', () => {
-        expect(userSettings.disableLogsMonitoring).to.be.true;
-      });
-
-      it('should propagate `disableRequestResponseCollection`', () => {
-        expect(userSettings.disableRequestResponseMonitoring).to.be.true;
+      it('should propagate user settings', () => {
+        expect(userSettings).to.deep.equal({ monitoring: { logs: { disabled: true } } });
       });
     });
 
@@ -293,31 +288,6 @@ describe('test/unit/lib/classes/console.test.js', () => {
             ({ Ref: logicalId }) => logicalId === awsNaming.getConsoleExtensionLayerLogicalId()
           )
         ).to.be.true;
-      });
-    });
-
-    describe('disable logs collection', () => {
-      it('should not setup report logs url', async () => {
-        const { cfTemplate, awsNaming } = await runServerless({
-          fixture: 'function',
-          command: 'package',
-          configExt: {
-            console: { disableLogsCollection: true },
-            org: 'testorg',
-          },
-          modulesCacheStub: {
-            [require.resolve('@serverless/utils/api-request')]: createApiStub().stub,
-          },
-          awsRequestStubMap: createAwsRequestStubMap(),
-          env: { SLS_ORG_TOKEN: 'dummy' },
-        });
-
-        const fnVariables =
-          cfTemplate.Resources[awsNaming.getLambdaLogicalId('basic')].Properties.Environment
-            .Variables;
-        expect(fnVariables).to.have.property('SLS_OTEL_REPORT_REQUEST_HEADERS');
-        expect(fnVariables).to.not.have.property('SLS_OTEL_REPORT_LOGS_URL');
-        expect(fnVariables).to.have.property('AWS_LAMBDA_EXEC_WRAPPER');
       });
     });
 
